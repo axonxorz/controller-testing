@@ -43,8 +43,13 @@ def record_data_es(document):
     return es.index(index=index_name, document=document)
 
 
+CANARY_HOSTNAME = 'test-client'
+
+
 def do_test():
     my_hostname = socket.getfqdn()
+    if my_hostname == CANARY_HOSTNAME:
+        raise ValueError(f'Cannot post to Elasticsearch with hostname {CANARY_HOSTNAME}')
     my_ip_address = [x['addr'] for x in ni.ifaddresses('ens160')[ni.AF_INET]][0]
 
     while True:
