@@ -3,21 +3,54 @@ import json
 import time
 import logging
 import hashlib
+import socket
+import ssl
 
 import requests
 from requests.exceptions import RequestException
 import arrow
+import elasticsearch
+from elasticsearch.connection import create_ssl_context
+import netifaces as ni
 
 
-logging.basicConfig()
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('tester')
 URL = 'http://checkip.brainwire.ca'
-DATA_OUTPUT = '/home/ubuntu/results.json'
+
+
+_es = None
+
+
+def connect_es():
+    global _es
+    if not _es:
+        es_hosts = ['https://elastic:admin159@204.209.29.10:9200']
+        context = create_ssl_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+        _es = elasticsearch.Elasticsearch(hosts=es_hosts,
+                                          ssl_context=context)
+    return _es
+
+
+def record_data_es(document):
+    es = connect_es()
+    index_name = 'outage-tracking'
+    exists = es.indices.exists(index=index_name)
+    if not exists:
+        raise ValueError(f'Index {index_name} does not exist')
+    return es.index(index=index_name, document=document)
 
 
 def do_test():
+    my_hostname = socket.getfqdn()
+    my_ip_address = [x['addr'] for x in ni.ifaddresses('ens160')[ni.AF_INET]][0]
+
     while True:
-        data_result = {'time': arrow.now().format(),
+        data_result = {'time': arrow.now().isoformat(),
+                       'hostname': my_hostname,
+                       'local_ip': my_ip_address,
                        'url': URL,
                        'response_code': None,
                        'response_hash': None,
@@ -26,7 +59,6 @@ def do_test():
         try:
             result = requests.get(URL)
             result.raise_for_status()
-            print(result)
             data_result['response_code'] = result.status_code
             data_result['response_hash'] = hashlib.md5(result.text.encode('utf8')).hexdigest()
             try:
@@ -37,14 +69,11 @@ def do_test():
         except Exception as exc:
             data_result['error'] = f'{type(exc)}: {str(exc)}'
 
-        logger.info(str(data_result))
-
-        with open(DATA_OUTPUT, 'a', encoding='utf8') as fd:
-            fd.write(json.dumps(data_result))
-            fd.write('\n')
+        record_data_es(data_result)
 
         time.sleep(1)
 
 
 if __name__ == '__main__':
+    connect_es()
     do_test()
