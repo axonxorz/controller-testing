@@ -47,7 +47,7 @@ CANARY_HOSTNAME = 'test-client'
 
 
 def do_test():
-    my_hostname = socket.getfqdn()
+    my_hostname = CANARY_HOSTNAME
     if my_hostname == CANARY_HOSTNAME:
         raise ValueError(f'Cannot post to Elasticsearch with hostname {CANARY_HOSTNAME}')
     my_ip_address = [x['addr'] for x in ni.ifaddresses('ens160')[ni.AF_INET]][0]
