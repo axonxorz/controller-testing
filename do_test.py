@@ -79,7 +79,10 @@ def do_test():
         except Exception as exc:
             data_result['error'] = f'{type(exc)}: {str(exc)}'
 
-        record_data_es(data_result)
+        try:
+            record_data_es(data_result)
+        except Exception as exc:
+            logger.exception('Error posting result to ES')
 
         time.sleep(1)
 
