@@ -65,12 +65,14 @@ def do_test():
                        'response_code': None,
                        'response_hash': None,
                        'response_snippet': None,
+                       'success': False,
                        'error': None}
         try:
             result = r_session.get(URL)
             result.raise_for_status()
             data_result['response_code'] = result.status_code
             data_result['response_hash'] = hashlib.md5(result.text.encode('utf8')).hexdigest()
+            data_result['success'] = 'REMOTE_ADDR' in result.text
             try:
                 data_result['response_snippet'] = result.text[:50].strip()
             except Exception as exc:
