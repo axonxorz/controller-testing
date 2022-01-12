@@ -5,6 +5,8 @@ import logging
 import hashlib
 import socket
 import ssl
+import warnings
+warnings.simplefilter('ignore')
 
 import requests
 from requests.exceptions import RequestException
