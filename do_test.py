@@ -43,18 +43,18 @@ def record_data_es(document):
     return es.index(index=index_name, document=document)
 
 
-CANARY_HOSTNAME = 'test-client'
+MY_HOSTNAME = 'test-client'
+INTERFACE = 'eth0'
 
 
 def do_test():
-    my_hostname = CANARY_HOSTNAME
-    if my_hostname == CANARY_HOSTNAME:
-        raise ValueError(f'Cannot post to Elasticsearch with hostname {CANARY_HOSTNAME}')
-    my_ip_address = [x['addr'] for x in ni.ifaddresses('ens160')[ni.AF_INET]][0]
+    if MY_HOSTNAME == 'test-client':
+        raise ValueError(f'Cannot post to Elasticsearch with hostname test-client')
+    my_ip_address = [x['addr'] for x in ni.ifaddresses(INTERFACE)[ni.AF_INET]][0]
 
     while True:
         data_result = {'time': arrow.now().isoformat(),
-                       'hostname': my_hostname,
+                       'hostname': MY_HOSTNAME,
                        'local_ip': my_ip_address,
                        'url': URL,
                        'response_code': None,
