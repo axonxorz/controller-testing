@@ -54,6 +54,9 @@ def do_test():
         raise ValueError(f'Cannot post to Elasticsearch with hostname test-client')
     my_ip_address = [x['addr'] for x in ni.ifaddresses(INTERFACE)[ni.AF_INET]][0]
 
+    r_session = requests.Session()
+    r_session.headers['Connection'] = 'close'  # disable keep-alive
+
     while True:
         data_result = {'time': arrow.now().isoformat(),
                        'hostname': MY_HOSTNAME,
@@ -64,7 +67,7 @@ def do_test():
                        'response_snippet': None,
                        'error': None}
         try:
-            result = requests.get(URL)
+            result = r_session.get(URL)
             result.raise_for_status()
             data_result['response_code'] = result.status_code
             data_result['response_hash'] = hashlib.md5(result.text.encode('utf8')).hexdigest()
